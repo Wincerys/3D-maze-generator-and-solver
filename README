@@ -1,14 +1,514 @@
-The main script is mazeTester.py.
-There are four sample configuration files, one for each task.  These specify the parameters used to run assignment 2.
+# 3D Maze Generation and Solving Algorithms
 
-To run the script, go to the same folder/directory that this README.txt file is located, and execute:
+> ⚠️ **ACADEMIC INTEGRITY NOTICE**  
+> This is an **individual university project** completed for **RMIT University - COSC1285: Algorithms and Analysis**.  
+> **DO NOT COPY OR REUSE THIS CODE FOR ACADEMIC SUBMISSIONS.**  
+> This repository is public for **employment portfolio purposes only**.  
+> Any academic use constitutes plagiarism and will be detected.
 
-On Windows:
-    python mazeTester2.py sampleConfig01TaskA.json
-On *nix, particularly core teaching servers:
-    python3 mazeTester2.py sampleConfig01TaskA.json
+---
 
-On the core teaching servers, matplotlib isn't installed, hence visualisation won't work.  Please run the visualisation on your own machines.
+## 🎓 Project Information
 
-Please avoid modifying the provided files, apart from implementing adjListGraph.py and adjMatGraph.py.
-If you must modify anything, please check in with the teaching team first.
+**Course:** COSC1285 - Algorithms and Analysis  
+**Institution:** RMIT University  
+**Semester:** Semester 1, 2024  
+**Project Type:** Individual Assignment  
+**Grade Received:** Credit (CR)  
+**Status:** ✅ Completed Solo
+
+---
+
+## 📋 Project Overview
+
+This project implements and analyzes advanced algorithms for **3D maze generation and solving**. Unlike traditional 2D mazes, this system handles three-dimensional maze structures where agents can move left, right, forward, backward, **up, and down** between levels.
+
+The project explores fundamental algorithmic design paradigms including:
+- **Graph traversal algorithms** (DFS, Random Walk)
+- **Greedy algorithms** (Prim's)
+- **Probabilistic algorithms** (Wilson's)
+- **Heuristic search** (Wall Following, Pledge)
+
+**Core Focus:** Successfully implemented multiple maze generation and solving algorithms in 3D space, extending traditional 2D algorithms to handle vertical movement between levels.
+
+---
+
+## 🎯 Technical Highlights
+
+### Core Implementations (Tasks A & B)
+- **3D maze representation** using adjacency list graph data structure
+- **2 maze generation algorithms** (Prim's, Wilson's) successfully implemented
+- **2 maze solving algorithms** (Wall Following, Pledge) working correctly
+- **3D coordinate system** with level-row-column indexing
+- **6-directional movement** (N, E, S, W, Up, Down)
+- **Graph traversal** algorithms properly extended to 3D
+
+### Skills Demonstrated
+- Extended 2D algorithms to handle 3D space
+- Implemented algorithms from theoretical descriptions
+- Worked with graph data structures efficiently
+- Analyzed algorithm characteristics and trade-offs
+- Completed individual programming project independently
+
+### Extended Tasks
+- Explored approaches for optimization problems (Task C)
+- Experimented with adversarial strategies (Task D)
+- Gained experience with more complex algorithmic challenges
+
+---
+
+## ✨ Key Features
+
+### Task A: Maze Generation Algorithms
+
+**Implemented Generators:**
+
+1. **Prim's Algorithm Generator**
+   - Greedy approach to maze generation
+   - Uses frontier set and minimum spanning tree concepts
+   - Produces mazes with shorter, more direct paths
+   - Randomly selects cells from frontier (uniform edge weights)
+
+2. **Wilson's Algorithm Generator**
+   - Loop-erased random walk
+   - Generates all possible mazes with equal probability (unbiased)
+   - More computationally expensive but produces diverse maze types
+   - Ensures perfect mazes (one path between any two cells)
+
+3. **Recursive Backtracking Generator** (provided, studied)
+   - DFS-based generation
+   - Produces mazes with longer, winding corridors
+   - Efficient generation time
+
+**Key Difference:** Different generators produce mazes with different "textures" - some favor long corridors, others create more branching paths. This impacts solver performance significantly.
+
+---
+
+### Task B: Maze Solving Algorithms
+
+**Implemented Solvers:**
+
+1. **Wall Following Solver**
+   - Right-hand (or left-hand) rule heuristic
+   - Extended to 3D using 6-direction rotation: {North, NE (up), East, South, SW (down), West}
+   - Simple but effective for perfect mazes without loops
+   - Human-intuitive strategy
+
+2. **Pledge Algorithm Solver**
+   - Extension of wall following with angle tracking
+   - Maintains direction preference until hitting walls
+   - Tracks cumulative rotation angle (+60° right, -60° left)
+   - Returns to preferred direction when angle = 0
+   - Less likely to get stuck in complex regions
+
+3. **Recursive Backtracking Solver** (provided, studied)
+   - DFS-based solving
+   - Explores all paths systematically
+   - Guaranteed to find exit in perfect mazes
+
+**Algorithm Trade-offs:**
+- Wall Following: Simple, low memory, but can take long routes
+- Pledge: Better than wall following, more sophisticated heuristic
+- Recursive Backtracking: Guarantees finding exit, explores systematically
+
+---
+
+### Task C: Optimal Path with Unknown Exits (Attempted)
+
+**Problem Statement:**  
+Given multiple entrances and unknown exit locations (only know count), find the optimal entrance-exit pair that minimizes:
+
+```
+Cost = cells_explored + distance(entrance, exit)
+```
+
+**My Approach:**
+
+I attempted to solve this by:
+
+1. **Exploration Strategy:**
+   - Modified existing solvers to explore from multiple entrances
+   - Tracked which exits were discovered during exploration
+   - Recorded the number of cells visited
+
+2. **Path Selection:**
+   - Computed distances between discovered entrance-exit pairs
+   - Attempted to balance exploration cost with path length
+   - Selected the pair with lowest combined cost
+
+**Challenges Encountered:**
+- Balancing thorough exploration vs. minimizing cells visited proved difficult
+- Finding the true optimal strategy required more sophisticated optimization
+- Multiple entrance handling added significant complexity
+- Time constraints limited the depth of optimization I could achieve
+
+**Outcome:** Implemented a working solution that found valid paths, though not necessarily the globally optimal solution. This task demonstrated the complexity of multi-objective optimization problems.
+
+---
+
+### Task D: Adversarial Maze Generation (Attempted)
+
+**Problem Statement:**  
+Generate mazes that maximize the average number of cells explored by known solver algorithms.
+
+**My Approach:**
+
+I experimented with strategies to create more challenging mazes:
+
+1. **Understanding Solver Behavior:**
+   - Analyzed how different solvers navigate mazes
+   - Observed that Wall Following solvers prefer peripheral paths
+   - Noted that Recursive Backtracking explores more in branching mazes
+
+2. **Generation Attempts:**
+   - Tried modifying existing generators to place exits strategically
+   - Experimented with different maze structures
+   - Attempted to create longer paths between entrances and exits
+
+3. **Challenges:**
+   - Difficult to predict solver behavior without extensive testing
+   - Creating truly adversarial mazes while maintaining maze validity was complex
+   - Limited time to iterate and refine the approach
+
+**Outcome:** Implemented a basic adversarial generator that produced some increase in exploration cells, though not consistently optimal. This task highlighted the difficulty of adversarial algorithm design.
+
+---
+
+## 🛠️ Technology & Implementation
+
+### Core Technologies
+- **Python 3.6.8+**
+- **Graph Theory** implementations
+- **Algorithm Design** paradigms
+- **Data Structures** (graphs, sets, stacks)
+
+### Data Structures Implemented
+
+**Adjacency List Graph:**
+```python
+class AdjListGraph:
+    # Efficient for sparse graphs (mazes)
+    # O(V + E) space complexity
+    # Fast neighbor lookup: O(degree(v))
+    # Ideal for DFS/BFS traversals
+```
+
+**3D Maze Representation:**
+```python
+# Coordinate system: (level, row, column)
+# Level 0 = bottom, increases upward
+# (0, 0, 0) = bottom-left corner of lowest level
+# Supports multiple levels with varying dimensions
+```
+
+**Wall Tracking:**
+```python
+# Passages between cells tracked efficiently
+# Supports 6 directions in 3D space
+# Entrance/exit cells use extended grid (-1 and size+1)
+```
+
+---
+
+## 🏗️ Project Structure
+
+```
+3d-maze-algorithms/
+├── mazeTester2.py              # Main execution script
+├── generatorSelector.py        # Generator routing logic
+├── solverSelector.py           # Solver routing logic
+│
+├── maze/
+│   ├── maze3D.py              # 3D maze data structure
+│   ├── util.py                # Coordinate class and utilities
+│   ├── graph.py               # Abstract graph interface
+│   └── adjListGraph.py        # Adjacency list implementation
+│
+├── generation/
+│   ├── mazeGenerator.py       # Abstract generator class
+│   ├── recurBackGenerator.py # Recursive backtracking (provided)
+│   ├── primGenerator.py       # Prim's algorithm (implemented)
+│   ├── wilsonGenerator.py     # Wilson's algorithm (implemented)
+│   └── taskDGenerator.py      # Adversarial generator (implemented)
+│
+├── solving/
+│   ├── mazeSolver.py          # Abstract solver class
+│   ├── recurBackSolver.py    # Recursive backtracking (provided)
+│   ├── wallFollowingSolver.py # Wall following (implemented)
+│   ├── pledgeSolver.py        # Pledge algorithm (implemented)
+│   └── taskCSolver.py         # Optimal path finder (implemented)
+│
+├── config/
+│   ├── sampleConfig01TaskA.json  # Task A configuration
+│   ├── sampleConfig02TaskB.json  # Task B configuration
+│   ├── sampleConfig03TaskC.json  # Task C configuration
+│   └── sampleConfig04TaskD.json  # Task D configuration
+│
+└── README.md
+```
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.6.8 or later
+- matplotlib (for visualization, optional)
+
+### Running the Project
+
+```bash
+# Generate maze using Prim's algorithm
+python3 mazeTester2.py config/sampleConfig01TaskA.json
+
+# Solve maze with Wall Following algorithm
+python3 mazeTester2.py config/sampleConfig02TaskB.json
+
+# Find optimal entrance-exit pair (unknown exits)
+python3 mazeTester2.py config/sampleConfig03TaskC.json
+
+# Generate adversarial maze
+python3 mazeTester2.py config/sampleConfig04TaskD.json
+```
+
+### Configuration Files
+
+Configuration files specify:
+- Maze dimensions (levels, rows, columns per level)
+- Number of entrances and exits
+- Generator algorithm to use
+- Solver algorithm to use
+- Random seed (for reproducibility)
+
+Example configuration:
+```json
+{
+  "mazeType": "3D",
+  "levels": 3,
+  "rows": [5, 6, 10],
+  "columns": [5, 6, 5],
+  "entrances": 2,
+  "exits": 3,
+  "generator": "prim",
+  "solver": "wallFollowing",
+  "seed": 42,
+  "visualize": true
+}
+```
+
+---
+
+## 🧪 Algorithm Analysis
+
+### Time Complexity
+
+**Maze Generation:**
+- Prim's: O(E log V) with priority queue, O(E + V) with simple selection
+- Wilson's: O(V²) average case (random walk dependent)
+- Recursive Backtracking: O(V + E) where V = cells, E = passages
+
+**Maze Solving:**
+- Wall Following: O(V) in worst case (visits every cell)
+- Pledge: O(V) worst case, typically better than wall following
+- Recursive Backtracking: O(V + E) guaranteed
+
+### Space Complexity
+- Adjacency List: O(V + E)
+- Solver visited set: O(V)
+- Recursion stack: O(V) worst case
+
+### Performance Characteristics
+
+**Generator Comparison:**
+| Algorithm | Speed | Maze Type | Bias |
+|-----------|-------|-----------|------|
+| Recursive Backtracking | Fast | Long corridors | Biased |
+| Prim's | Medium | Shorter paths | Slightly biased |
+| Wilson's | Slow | Varied | Unbiased |
+
+**Solver Comparison:**
+| Algorithm | Completeness | Efficiency | Memory |
+|-----------|--------------|------------|--------|
+| Recursive Backtracking | Complete | Systematic | O(V) |
+| Wall Following | Complete* | Variable | O(1) |
+| Pledge | Complete* | Better than wall | O(1) |
+
+*Complete for perfect mazes without loops
+
+---
+
+## 📊 Example Results
+
+### Maze Generation Comparison (Tasks A)
+```
+5×5×3 Maze (3 levels, 5 rows, 5 columns each)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Generator          | Implemented | Characteristics
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Recursive Back     | ✅           | Long winding corridors
+Prim's             | ✅           | Shorter branching paths
+Wilson's           | ✅           | Unbiased generation
+```
+
+### Solver Performance (Task B)
+```
+Successfully implemented both solvers on various maze configurations
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Solver             | Implemented | Notes
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Recursive Back     | ✅           | Systematic exploration
+Wall Following     | ✅           | 6-direction support
+Pledge             | ✅           | Angle tracking in 3D
+```
+
+### Extended Tasks
+```
+Task C: Partial implementation - found valid paths but not always optimal
+Task D: Basic implementation - some improvement over random generation
+```
+
+---
+
+## 🎯 Key Learning Outcomes
+
+Through this project, I developed expertise in:
+
+✅ **Algorithm Design**: Implemented multiple algorithmic paradigms (greedy, probabilistic, heuristic)  
+✅ **Graph Algorithms**: DFS, Prim's, random walk, traversal strategies  
+✅ **Data Structures**: Efficient graph representations for 3D structures  
+✅ **Algorithm Analysis**: Time/space complexity analysis and trade-offs  
+✅ **Optimization**: Multi-objective optimization with conflicting goals  
+✅ **Adversarial Thinking**: Designing algorithms to exploit other algorithms  
+✅ **3D Spatial Reasoning**: Extending 2D algorithms to 3D space  
+✅ **Heuristic Design**: Creating and analyzing problem-specific heuristics  
+✅ **Problem Decomposition**: Breaking complex problems into manageable sub-problems  
+✅ **Comparative Analysis**: Empirically comparing algorithm performance
+
+**Advanced Concepts Mastered:**
+- Exploration-exploitation trade-offs
+- Unbiased random sampling (Wilson's algorithm)
+- Loop-erased random walks
+- Multi-dimensional graph traversal
+- Adversarial algorithm design
+
+---
+
+## 🔧 Design Decisions
+
+### Why Adjacency List?
+Mazes are sparse graphs (each cell has at most 6 neighbors). Adjacency list provides:
+- O(1) neighbor lookups
+- O(V + E) space (better than adjacency matrix's O(V²))
+- Efficient for DFS/BFS traversals
+
+### 3D Coordinate System
+Chose (level, row, column) convention:
+- Consistent with matplotlib's indexing
+- Intuitive: level increases upward
+- Easy extension from 2D mazes
+- Supports variable dimensions per level
+
+### Wall Representation
+Tracked passages rather than walls:
+- More intuitive for perfect mazes
+- Efficient for generation algorithms
+- Simpler traversal logic
+
+---
+
+## 📚 Algorithmic Paradigms Explored
+
+### Successfully Implemented
+
+**Greedy Algorithms**  
+**Prim's Maze Generator:**
+- Frontier-based selection
+- Builds spanning tree through greedy choices
+- Produces different maze characteristics than DFS
+
+**Probabilistic Algorithms**  
+**Wilson's Algorithm:**
+- Loop-erased random walk
+- Unbiased maze generation
+- Converges to uniform distribution
+
+**Heuristic Search**  
+**Wall Following & Pledge:**
+- Right/left-hand rule in 3D
+- Angle tracking for direction preference
+- Practical heuristics without optimality guarantees
+
+**Graph Traversal**  
+**Recursive Backtracking:**
+- Depth-first search approach
+- Systematic maze exploration
+- Backtracking on dead ends
+
+### Explored (Tasks C & D)
+
+**Multi-Objective Optimization**  
+- Attempted balancing exploration cost vs. path length
+- Learned about trade-offs in competing objectives
+
+**Adversarial Design**  
+- Explored creating challenging mazes
+- Experimented with exploiting solver behavior
+
+---
+
+## 📧 Contact
+
+**For Employers/Recruiters:**
+
+This project demonstrates my ability to:
+- Implement complex algorithms from theoretical descriptions
+- Design custom algorithms for novel problem constraints
+- Analyze and compare algorithm performance empirically
+- Work with graph data structures and 3D spatial reasoning
+- Solve optimization problems with competing objectives
+- Think adversarially and exploit algorithmic weaknesses
+- Write clean, well-documented, maintainable code
+- Complete challenging individual projects independently
+
+The most sophisticated aspects were:
+1. **Task C** - Designing the exploration strategy for unknown exits
+2. **Task D** - Creating adversarial generators for different solvers
+3. **3D Algorithm Extension** - Adapting 2D algorithms to 3D space
+
+I can explain the implementation details, algorithm trade-offs, and design decisions for any component.
+
+**Jatanjeet Singh**  
+📧 Email: jsgk1056@gmail.com  
+💼 LinkedIn: [linkedin.com/in/jatanjeet-singh](https://www.linkedin.com/in/jatanjeet-singh-317961332/)  
+🐙 GitHub: [github.com/Wincerys](https://github.com/Wincerys)
+
+---
+
+## 📄 License
+
+```
+Copyright (c) 2024 Jatanjeet Singh
+All Rights Reserved
+
+ACADEMIC PROJECT - NOT FOR REUSE
+
+This code is provided for portfolio demonstration purposes only.
+NOT licensed for use, modification, or distribution.
+Academic use constitutes plagiarism and academic dishonesty.
+```
+
+---
+
+## 🙏 Acknowledgments
+
+- **RMIT University**: Course materials and algorithm descriptions
+- **Algorithm Design**: Classic algorithms from computer science literature
+- **Python**: Standard library and data structures
+
+---
+
+**Project Status:** ✅ Completed Solo | 🎓 Graded (CR) | 🔒 Academic Portfolio Only
+
+---
+
+*This project demonstrates solid understanding of fundamental algorithms and data structures through implementation of 3D maze generation and solving algorithms. Successfully completed core implementations (Tasks A & B) with attempted solutions for advanced optimization challenges.*
