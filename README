@@ -345,7 +345,7 @@ Example configuration:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Generator          | Implemented | Characteristics
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Recursive Back     | ✅           | Long winding corridors
+Recursive Back     | ✅ (provided)| Long winding corridors
 Prim's             | ✅           | Shorter branching paths
 Wilson's           | ✅           | Unbiased generation
 ```
@@ -356,7 +356,7 @@ Successfully implemented both solvers on various maze configurations
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Solver             | Implemented | Notes
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Recursive Back     | ✅           | Systematic exploration
+Recursive Back     | ✅ (provided)| Systematic exploration
 Wall Following     | ✅           | 6-direction support
 Pledge             | ✅           | Angle tracking in 3D
 ```
