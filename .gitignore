@@ -57,7 +57,3 @@ venv.bak/
 # OS
 .DS_Store
 Thumbs.db
-
-# Assignment specific (optional)
-*.pyc
-.mypy_cache/
