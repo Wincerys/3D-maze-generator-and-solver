@@ -14,87 +14,62 @@ class WilsonMazeGenerator(MazeGenerator):
 
         # Dimensions of the maze
         num_levels = maze.levelNum()
-        dimensions = [(maze.rowNum(level), maze.colNum(level)) for level in range(num_levels)]
-
+        
         # Set of finalized cells
         finalized = set()
-
+        
+        # Get all cells
+        all_cells = [Coordinates3D(l, r, c) 
+                     for l in range(num_levels) 
+                     for r in range(maze.rowNum(l)) 
+                     for c in range(maze.colNum(l))]
+        
         # Start with a random cell
-        start_level = random.randint(0, num_levels - 1)
-        start_row = random.randint(0, dimensions[start_level][0] - 1)
-        start_col = random.randint(0, dimensions[start_level][1] - 1)
-        start_cell = Coordinates3D(start_level, start_row, start_col)
-
-        # Mark the starting cell as finalized
+        start_cell = random.choice(all_cells)
         finalized.add(start_cell)
-
-        # Generate maze using Wilson's algorithm
-        unfinalized_cells = [Coordinates3D(l, r, c) for l in range(num_levels) for r in range(dimensions[l][0]) for c in range(dimensions[l][1])]
-        unfinalized_cells.remove(start_cell)
+        
+        # Track unfinalized cells
+        unfinalized_cells = set(all_cells) - {start_cell}
 
         while unfinalized_cells:
             # Select a random unfinalized cell
-            current_cell = random.choice(unfinalized_cells)
-            path = [current_cell]
-
-            while current_cell not in finalized:
-                # Perform a random walk
-                neighbours = self._get_valid_neighbors(maze, current_cell)
+            current_cell = random.choice(list(unfinalized_cells))
+            path = {current_cell: None}  # Use dict to track path and handle loops efficiently
+            path_order = [current_cell]
+            
+            # Perform random walk until we hit a finalized cell
+            walk_cell = current_cell
+            while walk_cell not in finalized:
+                neighbours = self._get_valid_neighbors(maze, walk_cell)
                 next_cell = random.choice(neighbours)
-
+                
                 if next_cell in path:
-                    # Remove the loop if we've visited the cell before
-                    loop_index = path.index(next_cell)
-                    path = path[:loop_index + 1]
+                    # Loop detected - erase the loop
+                    loop_start_idx = path_order.index(next_cell)
+                    # Remove cells in the loop from path
+                    for cell in path_order[loop_start_idx + 1:]:
+                        del path[cell]
+                    path_order = path_order[:loop_start_idx + 1]
                 else:
-                    path.append(next_cell)
-
-                current_cell = next_cell
-
-            # Add the path to the finalized cells and remove walls
-            for i in range(len(path) - 1):
-                if self._is_within_boundaries(maze, path[i], path[i + 1]):
-                    maze.removeWall(path[i], path[i + 1])
-                finalized.add(path[i])
-                if path[i] in unfinalized_cells:
-                    unfinalized_cells.remove(path[i])
-
-            # Ensure the last cell is also finalized
-            finalized.add(path[-1])
-            if path[-1] in unfinalized_cells:
-                unfinalized_cells.remove(path[-1])
-
-        # Add boundaries after generating the maze
-        self._add_boundaries(maze)
+                    # Add to path
+                    path[next_cell] = walk_cell
+                    path_order.append(next_cell)
+                
+                walk_cell = next_cell
+            
+            # Carve the path (excluding the last cell which is already finalized)
+            for i in range(len(path_order) - 1):
+                cell1 = path_order[i]
+                cell2 = path_order[i + 1]
+                maze.removeWall(cell1, cell2)
+                finalized.add(cell1)
+                unfinalized_cells.discard(cell1)
 
         # Set the mazeGenerated flag to True
         self.m_mazeGenerated = True
 
-    def _is_within_boundaries(self, maze: Maze3D, cell1: Coordinates3D, cell2: Coordinates3D) -> bool:
-        """
-        Check if the passage between two cells is within the maze boundaries.
-        """
-        levels = maze.levelNum()
-        for cell in [cell1, cell2]:
-            if not (0 <= cell.getLevel() < levels):
-                return False
-            rows, cols = maze.rowNum(cell.getLevel()), maze.colNum(cell.getLevel())
-            if not (0 <= cell.getRow() < rows) or not (0 <= cell.getCol() < cols):
-                return False
-        return True
-
-    def _add_boundaries(self, maze: Maze3D):
-        levels = maze.levelNum()
-        for level in range(levels):
-            rows, cols = maze.rowNum(level), maze.colNum(level)
-            for row in range(rows):
-                maze.addWall(Coordinates3D(level, row, -1), Coordinates3D(level, row, 0))
-                maze.addWall(Coordinates3D(level, row, cols - 1), Coordinates3D(level, row, cols))
-            for col in range(cols):
-                maze.addWall(Coordinates3D(level, -1, col), Coordinates3D(level, 0, col))
-                maze.addWall(Coordinates3D(level, rows - 1, col), Coordinates3D(level, rows, col))
-
     def _get_valid_neighbors(self, maze: Maze3D, cell: Coordinates3D):
+        """Get all valid neighbors of a cell within maze boundaries."""
         neighbors = []
         directions = [
             (0, -1, 0),    # North
@@ -105,18 +80,19 @@ class WilsonMazeGenerator(MazeGenerator):
             (-1, 0, 0)     # West
         ]
 
-        levels = maze.levelNum()
-        for direction in directions:
+        for dcol, drow, dlevel in directions:
             neighbor = Coordinates3D(
-                cell.getLevel() + direction[2],
-                cell.getRow() + direction[1],
-                cell.getCol() + direction[0]
+                cell.getLevel() + dlevel,
+                cell.getRow() + drow,
+                cell.getCol() + dcol
             )
-            if 0 <= neighbor.getLevel() < levels:
-                target_level = neighbor.getLevel()
-                target_rows = maze.rowNum(target_level)
-                target_cols = maze.colNum(target_level)
-                if 0 <= neighbor.getRow() < target_rows and 0 <= neighbor.getCol() < target_cols:
+            level = neighbor.getLevel()
+            
+            # Check level bounds
+            if 0 <= level < maze.levelNum():
+                row, col = neighbor.getRow(), neighbor.getCol()
+                # Check row/col bounds for this level
+                if 0 <= row < maze.rowNum(level) and 0 <= col < maze.colNum(level):
                     neighbors.append(neighbor)
 
         return neighbors
