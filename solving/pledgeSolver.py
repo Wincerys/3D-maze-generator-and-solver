@@ -1,142 +1,180 @@
 from typing import List, Tuple
-import random
+from collections import deque
 from maze.util import Coordinates3D
 from maze.maze3D import Maze3D
 from solving.mazeSolver import MazeSolver
 
-# Define directions including up and down movements
-DIRECTIONS = {
-    "N": (0, -1, 0),    # North
-    "NE": (0, 0, 1),    # North-East (up one level)
-    "E": (1, 0, 0),     # East
-    "S": (0, 1, 0),     # South
-    "SW": (0, 0, -1),   # South-West (down one level)
-    "W": (-1, 0, 0)     # West
+DIRECTION_CYCLE = ["N", "NE", "E", "S", "SW", "W"]
+DIRECTION_VECTORS = {
+    "N":  (0, -1,  0),
+    "NE": (0,  0,  1),
+    "E":  (1,  0,  0),
+    "S":  (0,  1,  0),
+    "SW": (0,  0, -1),
+    "W":  (-1, 0,  0),
 }
 
-# Define angles for turns
-TURN_ANGLES = {
-    "N": {"L": -60, "R": 60},
-    "NE": {"L": -60, "R": 60},
-    "E": {"L": -60, "R": 60},
-    "S": {"L": -60, "R": 60},
-    "SW": {"L": -60, "R": 60},
-    "W": {"L": -60, "R": 60}
-}
+
+def direction_of(frm: Coordinates3D, to: Coordinates3D):
+    dc = to.getCol()   - frm.getCol()
+    dr = to.getRow()   - frm.getRow()
+    dl = to.getLevel() - frm.getLevel()
+    for name, (vc, vr, vl) in DIRECTION_VECTORS.items():
+        if vc == dc and vr == dr and vl == dl:
+            return name
+    return None
+
+
+def turn_right(d: str) -> str:
+    return DIRECTION_CYCLE[(DIRECTION_CYCLE.index(d) + 1) % 6]
+
+
+def turn_left(d: str) -> str:
+    return DIRECTION_CYCLE[(DIRECTION_CYCLE.index(d) - 1) % 6]
+
 
 class PledgeMazeSolver(MazeSolver):
     """
-    Pledge solver implementation.
+    Pledge algorithm solver with BFS fallback.
+
+    MODE 1 (angle == 0): Walk straight in chosen_dir until hitting a wall.
+    MODE 2 (angle != 0): Right-hand wall following with angle tracking.
+        right turn -> angle += 1
+        left  turn -> angle -= 1
+    When angle returns to 0, switch back to MODE 1.
+
+    If a (cell, facing, angle) state repeats (cycle detected), falls back
+    to BFS to guarantee termination.
     """
 
     def __init__(self):
         super().__init__()
         self.m_name = "pledge"
-        self.path = []
-        self.cells_explored = 0
-        self.entrance_used = None
-        self.exit_used = None
-        self.m_solverPath = []
-        self.exits = set()
 
     def getName(self):
         return self.m_name
 
-    def get_next_position(self, current_position: Coordinates3D, direction: str) -> Coordinates3D:
-        current_x, current_y, current_z = current_position.getCol(), current_position.getRow(), current_position.getLevel()
-        move_x, move_y, move_z = DIRECTIONS[direction]
-        return Coordinates3D(current_z + move_z, current_y + move_y, current_x + move_x)
-
-    def is_valid_move(self, maze: Maze3D, current_position: Coordinates3D, next_position: Coordinates3D) -> bool:
-        # Check if the next position is within maze bounds and not a boundary wall
-        if next_position in self.exits:
-            # Ensure the exit is on the same level as the current position
-            if current_position.getLevel() == next_position.getLevel() and not maze.hasWall(current_position, next_position):
-                return True
-
-        if not maze.hasCell(next_position):
+    def _is_interior(self, maze: Maze3D, cell: Coordinates3D) -> bool:
+        lv = cell.getLevel()
+        if lv < 0 or lv >= maze.levelNum():
             return False
-        if maze.hasWall(current_position, next_position):
-            return False
-        # Ensure we are not moving into boundary cells unless it is an exit
-        level, row, col = next_position.getLevel(), next_position.getRow(), next_position.getCol()
-        rowNum, colNum = maze.rowNum(level), maze.colNum(level)
-        if row < 0 or row >= rowNum or col < 0 or col >= colNum:
-            if next_position not in self.exits:
-                return False
-        return True
+        r, c = cell.getRow(), cell.getCol()
+        return 0 <= r < maze.rowNum(lv) and 0 <= c < maze.colNum(lv)
 
-    def wall_following(self, maze: Maze3D, start: Coordinates3D, initial_direction: str, hand_rule: str) -> Coordinates3D:
-        current_position = start
-        angle = 0
-        visited = set()
-        self.path = [start]
-        self.m_solverPath.append((start, False))
+    def _try_move(self, maze: Maze3D, current: Coordinates3D,
+                  direction: str, exits: set):
+        for n in maze.neighbours(current):
+            if maze.hasWall(current, n):
+                continue
+            if direction_of(current, n) != direction:
+                continue
+            if self._is_interior(maze, n) or n in exits:
+                return n
+        return None
 
-        while True:
-            if current_position in self.exits:
-                self.exit_used = current_position
-                return current_position
-
-            visited.add(current_position)
-            self.cells_explored += 1
-
-            if hand_rule == "left":
-                directions_order = ["N", "NE", "E", "S", "SW", "W"]
-            else:
-                directions_order = ["N", "W", "SW", "S", "E", "NE"]
-
-            moved = False
-            for direction in directions_order:
-                next_position = self.get_next_position(current_position, direction)
-                if self.is_valid_move(maze, current_position, next_position) and next_position not in visited:
-                    angle += TURN_ANGLES[initial_direction]["L"] if hand_rule == "left" else TURN_ANGLES[initial_direction]["R"]
-                    current_position = next_position
-                    self.path.append(next_position)
-                    self.m_solverPath.append((next_position, False))
-                    moved = True
-                    break
-
-            if angle == 0:
-                return current_position  # Return to initial direction
-
-            if not moved:
-                if len(self.path) > 1:
-                    self.path.pop()
-                    self.m_solverPath.append((self.path[-1], True))
-                    current_position = self.path[-1]
-                else:
-                    break
+    def _bfs_to_exit(self, maze: Maze3D, start: Coordinates3D,
+                     exits: set) -> List[Coordinates3D]:
+        queue   = deque([(start, [start])])
+        visited = {start}
+        while queue:
+            current, path = queue.popleft()
+            if current in exits:
+                return path
+            for n in maze.neighbours(current):
+                if n in visited or maze.hasWall(current, n):
+                    continue
+                if not self._is_interior(maze, n) and n not in exits:
+                    continue
+                visited.add(n)
+                queue.append((n, path + [n]))
+        return []
 
     def solveMaze(self, maze: Maze3D, entrance: Coordinates3D):
-        self.entrance_used = entrance
-        self.exits = set(maze.getExits())
-        initial_direction = random.choice(list(DIRECTIONS.keys()))
-        hand_rule = random.choice(["left", "right"])
+        self.m_entranceUsed = entrance
+        exits = set(maze.getExits())
 
-        current_position = entrance
-        while True:
-            next_position = self.get_next_position(current_position, initial_direction)
-            if self.is_valid_move(maze, current_position, next_position):
-                current_position = next_position
-                self.path.append(next_position)
-                self.m_solverPath.append((next_position, False))
-            else:
-                current_position = self.wall_following(maze, current_position, initial_direction, hand_rule)
+        # ── Enter maze: step to the adjacent interior cell ───────────────
+        current = entrance
+        self.solverPathAppend(entrance, False)
 
-            if current_position in self.exits:
+        chosen_dir = None
+        for n in maze.neighbours(entrance):
+            if not maze.hasWall(entrance, n) and self._is_interior(maze, n):
+                d = direction_of(entrance, n)
+                if d is not None:
+                    chosen_dir = d
+                    current    = n
+                    self.solverPathAppend(current, False)
+                    break
+
+        if chosen_dir is None:
+            return
+
+        if current in exits:
+            self.solved(entrance, current)
+            return
+
+        # ── Pledge algorithm ─────────────────────────────────────────────
+        facing = chosen_dir
+        angle  = 0
+        seen_states = set()
+        moves = 0
+
+        total_cells = sum(
+            maze.rowNum(l) * maze.colNum(l) for l in range(maze.levelNum())
+        )
+        # Trigger BFS fallback if we make too many moves without finding exit
+        # (Pledge can revisit cells many times with different angles)
+        # Lower threshold = more efficient, but less "pure" Pledge behavior
+        max_moves = int(total_cells * 1.5)
+
+        while current not in exits:
+            state = (current, facing, angle)
+
+            if state in seen_states or moves >= max_moves:
+                # Cycle detected — BFS fallback
+                bfs_path = self._bfs_to_exit(maze, current, exits)
+                if bfs_path:
+                    for cell in bfs_path[1:]:
+                        current = cell
+                        self.solverPathAppend(current, False)
                 break
 
-        return self.path
+            seen_states.add(state)
 
-    def getCellsExplored(self) -> int:
-        return self.cells_explored
+            if angle == 0:
+                # MODE 1: walk straight
+                facing = chosen_dir
+                nxt    = self._try_move(maze, current, facing, exits)
+                if nxt is not None:
+                    current = nxt
+                    self.solverPathAppend(current, False)
+                    moves += 1
+                else:
+                    # Hit wall — enter MODE 2
+                    facing  = turn_left(facing)
+                    angle  -= 1
+            else:
+                # MODE 2: wall following
+                nxt = self._try_move(maze, current, turn_right(facing), exits)
+                if nxt is not None:
+                    facing  = turn_right(facing)
+                    angle  += 1
+                    current = nxt
+                    self.solverPathAppend(current, False)
+                    moves += 1
+                    continue
 
-    def getEntranceUsed(self) -> Coordinates3D:
-        return self.entrance_used
+                nxt = self._try_move(maze, current, facing, exits)
+                if nxt is not None:
+                    current = nxt
+                    self.solverPathAppend(current, False)
+                    moves += 1
+                    continue
 
-    def getExitUsed(self) -> Coordinates3D:
-        return self.exit_used
+                # Turn left (-1), no move
+                facing  = turn_left(facing)
+                angle  -= 1
 
-    def getSolverPath(self) -> List[Tuple[Coordinates3D, bool]]:
-        return self.m_solverPath
+        if current in exits:
+            self.solved(entrance, current)
