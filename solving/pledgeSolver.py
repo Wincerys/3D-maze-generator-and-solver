@@ -126,7 +126,7 @@ class PledgeMazeSolver(MazeSolver):
         # Trigger BFS fallback if we make too many moves without finding exit
         # (Pledge can revisit cells many times with different angles)
         # Lower threshold = more efficient, but less "pure" Pledge behavior
-        max_moves = int(total_cells * 1.5)
+        max_moves = int(total_cells * 1.2)
 
         while current not in exits:
             state = (current, facing, angle)
